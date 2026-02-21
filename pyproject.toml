@@ -1,0 +1,32 @@
+[project]
+name = "ml_framework_project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "pandas>=3.0.0",
+    "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
+    "torch>=2.10.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+    "build>=1.4.0",
+    "flake8>=7.3.0",
+    "pylint>=4.0.4",
+    "pytest>=9.0.2",
+    "taskipy>=1.14.1",
+]
+
+[tool.taskipy.tasks]
+format = "black ."
+format-check = "black --check ."
+flake = "flake8 ./ml_framework_project"
+pylint = "pylint ./ml_framework_project"
+build = "python -m build"
+test = "uv run pytest --cov=ml_framework_project --cov-report=term-missing"
