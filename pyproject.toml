@@ -31,3 +31,8 @@ flake = "flake8 ./ml_framework_project"
 pylint = "pylint ./ml_framework_project"
 build = "python -m build"
 test = "uv run pytest --cov=ml_framework_project --cov-report=term-missing"
+
+[tool.uv.workspace]
+members = [
+    "ml-framework-template",
+]
