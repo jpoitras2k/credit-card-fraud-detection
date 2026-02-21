@@ -1,77 +1,59 @@
-# Diamonds Predictor Application
+# Credit Card Fraud Detection Project
 
-This repository contains an end-to-end Machine Learning Framework designed to predict the price and cut quality of diamonds based on their physical attributes. 
+This repository contains an end-to-end Machine Learning Framework designed to detect fraudulent credit card transactions. 
 
-## What problem is this solving?
-Evaluating diamonds is traditionally subjective and complex, relying on the "4 Cs" (Carat, Cut, Color, Clarity) alongside physical dimensions (length, width, depth). This project solves that problem by providing a robust, automated framework that digests raw diamond features and employs multiple machine learning pipelines to:
-1. **Classify** a diamond's `cut_quality` (Fair, Good, Very Good, Premium, Ideal).
-2. **Cluster** diamonds into unsupervised groups based strictly on their physical similarities.
-3. **Regress** (predict) the exact market `price_usd` of a diamond based on all engineered features.
+It was specifically built to fulfill the **RoboGarden / UpWork Machine Learning Bootcamp** requirements through a structured 6-phase approach ranging from Exploratory Data Analysis (EDA) to Deep Learning evaluation.
 
-## Prerequisites & Installation
+## Problem Description
+Credit card fraud detection is a critical classification problem. The challenge is the extreme class imbalance: out of hundreds of thousands of transactions, only a tiny fraction are fraudulent.
 
-This project is built using Python (3.11 - 3.12) and uses **UV** for fast dependency management.
+**Dataset:** The dataset consists of 284,807 credit card transactions made by European cardholders in September 2013.
+- **Link:** [Kaggle Source](https://www.kaggle.com/datasets/arockiaselciaa/creditcardcsv)
+- **Features:** `Time` (seconds since first transaction), `V1-V28` (PCA transformed features due to confidentiality), and `Amount` (transaction amount).
+- **Target:** `Class` (1 for Fraud, 0 for Genuine).
 
-### Required Libraries
-The core dependencies include:
-- `pandas` (Data manipulation)
-- `numpy` (Numerical operations)
-- `scikit-learn` (Machine learning models and metrics)
-- `matplotlib` & `seaborn` (Data visualization)
+## Technologies Mastered
+- **Languages:** Python (Object-Oriented Programming)
+- **Data Science:** Numpy, Pandas, Matplotlib, Seaborn
+- **Machine Learning (Scikit-Learn):** Linear & Logistic Regression, K-Nearest Neighbors, Decision Trees, Random Forest, K-Means Clustering.
+- **Deep Learning (Keras/TensorFlow):** Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN).
 
-### Setup Instructions
+## Bootcamp Implementation Phases
+
+### Phase 1: Data Analysis and Preparation
+- Conducted Exploratory Data Analysis (`exploration.ipynb`) to visualize the heavy class imbalance, transaction distributions, and correlation matrix.
+- Preprocessed the raw data by applying statistical scaling to the `Time` and `Amount` fields prior to model ingestion.
+
+### Phase 2 & 3: Model Selection, Design, and Parameter Tuning
+- Programmed a modular `Classifier` class that supports dynamic routing between Classical ML (Scikit-Learn) and Deep Learning (Keras/TensorFlow) networks.
+- Integrated `GridSearchCV` for automated hyperparameter tuning on classical models.
+- Constructed robust Keras Neural Networks utilizing `Dropout` layers to prevent overfitting and `EarlyStopping` callbacks.
+
+### Phase 4 & 5: Model Training, Evaluation, and Comparison
+- Trained the suite of models against the imbalanced data. 
+- Due to the nature of the dataset, evaluation aggressively prioritized **Precision-Recall AUC (PR-AUC)** and **F1-Scores** over standard accuracy.
+- Generated an automated Seaborn Bar Chart plotting the comparative performance metrics across all models upon pipeline completion.
+
+### Phase 6: Interactive UX
+- Wrapped the execution pipeline in an interactive Command Line Interface (CLI) menu, allowing users to select subsets of models (e.g., exclusively Deep Learning or exclusively Classical models) to save training time during review.
+
+## Setup Instructions
+
+This project is built using Python 3.11+ and uses **UV** for fast dependency management.
+
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/[your-username]/ml-framework-project-new.git
-   cd ml-framework-project-new
+   git clone https://github.com/jpoitras2k/credit-card-fraud-detection.git
+   cd credit-card-fraud-detection
    ```
 
-2. **Install dependencies using UV (or pip):**
+2. **Install dependencies using UV:**
    ```bash
    uv sync
-   
-   # Or alternatively, using pip with the pyproject.toml:
-   pip install .
    ```
 
-3. **Run the Application:**
+3. **Run the Interactive Application:**
    ```bash
-   python -m ml_framework_project.main
+   uv run python -m ml_framework_project.main
    ```
-
-## Project Structure & Documentation
-
-The framework is strictly divided into specialized modules.
-
-### 1. `data_analyzer`
-Responsible for data ingestion, cleaning, and feature engineering.
-* **`data_reader.py`**: Reads the raw CSV input.
-* **`data_preprocessing.py`**: Handles NaN values, renames columns, and engineers new features (`volume`, `density`).
-* **`encoder.py` & `scaler.py`**: Transforms categorical strings into integers (Label Encoding) and scales continuous prices (Z-Score & MinMax).
-
-### 2. `models`
-Contains modular, reusable Object-Oriented implementations of Scikit-Learn algorithms. Each class exposes a generic `.fit()`, `.predict()`, and `.score()` standard interface.
-
-#### `classifier.py`
-* **Input**: Training data (`X_train`, `y_train`) and a dynamic string `model_name` (e.g., 'KNN', 'Decision Tree', 'Random Forest', 'SVM', 'ANN').
-* **Behavior**: Uses `GridSearchCV` to tune hyperparameters automatically.
-* **Output**: A fully trained classification model, with scoring mapped to "Accuracy" and optional confusion matrix plotting.
-
-#### `regressor.py`
-* **Input**: Training data (`X_train`, `y_train`) and a `model_name` (e.g., 'Linear Regression', 'KNN', 'ANN').
-* **Behavior**: Trains against continuous targets (like `price_usd`).
-* **Output**: A trained regression model scored by default using $R^2$. Includes a method to generate a 2D scatter plot comparing `Actual vs Predicted` values.
-
-#### `clustering.py`
-* **Input**: Just features (`X`) without targets, aiming to discover patterns. Supports 'k-Means', 'Agglomerative Hierarchical Clustering', and 'Mean Shift Clustering'.
-* **Behavior**: Trains the model and assigns cluster labels to the dataset. Automatically limits intense $O(N^2)$ calculations on large datasets for stability.
-* **Output**: The clustered model, evaluated using `Silhouette Score`, and capable of rendering PCA-reduced 2D visualizations natively.
-
-### 3. `main.py`
-The orchestrator script. It sequentially groups the modules to automatically fetch data, preprocess it, and run the Classification, Clustering, and Regression pipelines back-to-back, dynamically reporting the "winning" algorithm for each discipline.
-
-## How Others Can Improve This Code
-If you're looking to contribute to or fork this project, here are some excellent areas for improvement:
-1. **Data Expansion:** Update `data_reader.py` to pull live data from an external Diamond Pricing API rather than a static CSV.
-2. **Deep Learning:** Enhance the `ANN` configurations within the model files to use TensorFlow or PyTorch for deeper, more reliable layer tuning.
-3. **Web Interface:** Wrap `main.py` in a FastAPI or Streamlit frontend so users can input a new diamond's stats manually and receive an instant price/cut prediction UI.
+   *Follow the on-screen terminal prompts to select which models to train!*
