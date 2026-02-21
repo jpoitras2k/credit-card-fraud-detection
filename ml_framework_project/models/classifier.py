@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -20,10 +20,9 @@ from sklearn.metrics import (
     roc_auc_score,
     average_precision_score,
 )
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
 
 
 def plot_confusion_matrix(y_true, y_pred, title="Confusion Matrix"):
@@ -39,48 +38,83 @@ def plot_confusion_matrix(y_true, y_pred, title="Confusion Matrix"):
     plt.show()
 
 
-class FraudNN(nn.Module):
-    def __init__(self, input_dim):
-        super(FraudNN, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 32)
-        self.relu1 = nn.ReLU()
-        self.dropout1 = nn.Dropout(0.2)
-        self.fc2 = nn.Linear(32, 16)
-        self.relu2 = nn.ReLU()
-        self.dropout2 = nn.Dropout(0.2)
-        self.fc3 = nn.Linear(16, 1)
-        self.sigmoid = nn.Sigmoid()
+def build_keras_ann(input_dim):
+    model = keras.Sequential(
+        [
+            layers.Dense(32, activation="relu", input_shape=(input_dim,)),
+            layers.Dropout(0.2),
+            layers.Dense(16, activation="relu"),
+            layers.Dropout(0.2),
+            layers.Dense(1, activation="sigmoid"),
+        ]
+    )
+    model.compile(
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=["accuracy", keras.metrics.AUC(name="pr_auc", curve="PR")],
+    )
+    return model
 
-    def forward(self, x):
-        out = self.fc1(x)
-        out = self.relu1(out)
-        out = self.dropout1(out)
-        out = self.fc2(out)
-        out = self.relu2(out)
-        out = self.dropout2(out)
-        out = self.fc3(out)
-        out = self.sigmoid(out)
-        return out
+
+def build_keras_cnn(input_dim):
+    model = keras.Sequential(
+        [
+            layers.Reshape((input_dim, 1), input_shape=(input_dim,)),
+            layers.Conv1D(filters=32, kernel_size=2, activation="relu"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(pool_size=2),
+            layers.Flatten(),
+            layers.Dense(64, activation="relu"),
+            layers.Dropout(0.5),
+            layers.Dense(1, activation="sigmoid"),
+        ]
+    )
+    model.compile(
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=["accuracy", keras.metrics.AUC(name="pr_auc", curve="PR")],
+    )
+    return model
+
+
+def build_keras_rnn(input_dim):
+    model = keras.Sequential(
+        [
+            layers.Reshape((1, input_dim), input_shape=(input_dim,)),
+            layers.LSTM(64, return_sequences=True),
+            layers.Dropout(0.2),
+            layers.LSTM(32),
+            layers.Dense(16, activation="relu"),
+            layers.Dense(1, activation="sigmoid"),
+        ]
+    )
+    model.compile(
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=["accuracy", keras.metrics.AUC(name="pr_auc", curve="PR")],
+    )
+    return model
 
 
 class Classifier:
     """
-    A generic Classifier class to train and evaluate various machine learning models with hyperparameter tuning.
+    A generic Classifier class to train and evaluate various local models and keras neural networks.
 
     Supported Models:
+    - Linear Regression (thresholded)
     - Logistic Regression
     - Random Forest
-    - SVM (Support Vector Machine)
-    - KNN (K-Nearest Neighbors)
+    - KNN
     - Decision Tree
-    - Naive Bayes
-    - ANN (Artificial Neural Network)
-    - PyTorch NN (Custom Neural Network using PyTorch)
+    - Keras ANN (Artificial Neural Network)
+    - Keras CNN (Convolutional Neural Network)
+    - Keras RNN (Recurrent Neural Network)
     """
 
     def __init__(self):
         self.model = None
-        self.is_pytorch = False
+        self.is_keras = False
+        self.is_linear_reg = False
 
     def fit(
         self,
@@ -89,73 +123,94 @@ class Classifier:
         model_name: str = "Logistic Regression",
         perform_tuning: bool = False,
     ):
-        self.is_pytorch = model_name == "PyTorch NN"
+        self.is_keras = model_name in ["Keras ANN", "Keras CNN", "Keras RNN"]
+        self.is_linear_reg = model_name == "Linear Regression"
 
-        if self.is_pytorch:
-            X_tensor = torch.tensor(
-                X_train.values if isinstance(X_train, pd.DataFrame) else X_train,
-                dtype=torch.float32,
+        X_array = X_train.values if isinstance(X_train, pd.DataFrame) else X_train
+        y_array = y_train.values if isinstance(y_train, pd.Series) else y_train
+        input_dim = X_array.shape[1]
+
+        if self.is_keras:
+            if model_name == "Keras ANN":
+                self.model = build_keras_ann(input_dim)
+            elif model_name == "Keras CNN":
+                self.model = build_keras_cnn(input_dim)
+            elif model_name == "Keras RNN":
+                self.model = build_keras_rnn(input_dim)
+
+            print(
+                f"Training {model_name} for 5 epochs (Early Stopping applied internally)..."
             )
-            y_tensor = torch.tensor(
-                y_train.values if isinstance(y_train, pd.Series) else y_train,
-                dtype=torch.float32,
-            ).unsqueeze(1)
 
-            dataset = TensorDataset(X_tensor, y_tensor)
-            loader = DataLoader(dataset, batch_size=64, shuffle=True)
+            early_stopping = keras.callbacks.EarlyStopping(
+                monitor="val_pr_auc", mode="max", patience=3, restore_best_weights=True
+            )
 
-            self.model = FraudNN(input_dim=X_tensor.shape[1])
-            criterion = nn.BCELoss()
-            optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-
-            print(f"Training {model_name} for 10 epochs...")
-            self.model.train()
-            for epoch in range(10):
-                running_loss = 0.0
-                for batch_X, batch_y in loader:
-                    optimizer.zero_grad()
-                    outputs = self.model(batch_X)
-                    loss = criterion(outputs, batch_y)
-                    loss.backward()
-                    optimizer.step()
-                    running_loss += loss.item()
+            # Use a validation split to monitor PR-AUC
+            self.model.fit(
+                X_array,
+                y_array,
+                epochs=5,
+                batch_size=256,
+                validation_split=0.1,
+                callbacks=[early_stopping],
+                verbose=1,
+            )
             print(f"Model '{model_name}' trained successfully.")
             return
 
-        if model_name == "Logistic Regression":
-            self.model = LogisticRegression(max_iter=1000)
+        if model_name == "Linear Regression":
+            self.model = LinearRegression()
+        elif model_name == "Logistic Regression":
+            if perform_tuning:
+                params = {"C": [0.1, 1.0, 10.0]}
+                self.model = GridSearchCV(
+                    LogisticRegression(max_iter=1000), params, scoring="accuracy", cv=2
+                )
+            else:
+                self.model = LogisticRegression(max_iter=1000)
         elif model_name == "Random Forest":
             self.model = RandomForestClassifier(n_estimators=50, random_state=42)
-        elif model_name == "SVM":
-            self.model = SVC(probability=True)
         elif model_name == "KNN":
-            self.model = KNeighborsClassifier()
+            if perform_tuning:
+                params = {"n_neighbors": [3, 5, 7]}
+                self.model = GridSearchCV(
+                    KNeighborsClassifier(), params, scoring="accuracy", cv=2
+                )
+            else:
+                self.model = KNeighborsClassifier()
         elif model_name == "Decision Tree":
-            self.model = DecisionTreeClassifier()
-        elif model_name == "Naive Bayes":
-            self.model = GaussianNB()
-        elif model_name == "ANN":
-            self.model = MLPClassifier(max_iter=500)
+            if perform_tuning:
+                params = {"max_depth": [None, 10, 20]}
+                self.model = GridSearchCV(
+                    DecisionTreeClassifier(), params, scoring="accuracy", cv=2
+                )
+            else:
+                self.model = DecisionTreeClassifier()
         else:
             raise ValueError(f"Model '{model_name}' is not supported.")
 
         print(f"Training {model_name}...")
         self.model.fit(X_train, y_train)
+
+        if perform_tuning and isinstance(self.model, GridSearchCV):
+            print(f"Best parameters for {model_name}: {self.model.best_params_}")
+            self.model = self.model.best_estimator_
+
         print(f"Model '{model_name}' trained successfully.")
 
     def predict(self, X_test: pd.DataFrame or np.ndarray) -> np.ndarray:
         if self.model is None:
             raise Exception("Model has not been trained yet. Please call fit() first.")
 
-        if self.is_pytorch:
-            self.model.eval()
-            X_tensor = torch.tensor(
-                X_test.values if isinstance(X_test, pd.DataFrame) else X_test,
-                dtype=torch.float32,
-            )
-            with torch.no_grad():
-                probs = self.model(X_tensor).numpy()
-                return (probs > 0.5).astype(int).flatten()
+        if self.is_keras:
+            X_array = X_test.values if isinstance(X_test, pd.DataFrame) else X_test
+            probs = self.model.predict(X_array, verbose=0)
+            return (probs > 0.5).astype(int).flatten()
+
+        if self.is_linear_reg:
+            preds = self.model.predict(X_test)
+            return (preds > 0.5).astype(int)
 
         return self.model.predict(X_test)
 
@@ -163,15 +218,13 @@ class Classifier:
         if self.model is None:
             raise Exception("Model has not been trained yet.")
 
-        if self.is_pytorch:
-            self.model.eval()
-            X_tensor = torch.tensor(
-                X_test.values if isinstance(X_test, pd.DataFrame) else X_test,
-                dtype=torch.float32,
-            )
-            with torch.no_grad():
-                probs = self.model(X_tensor).numpy().flatten()
-                return probs
+        if self.is_keras:
+            X_array = X_test.values if isinstance(X_test, pd.DataFrame) else X_test
+            probs = self.model.predict(X_array, verbose=0).flatten()
+            return probs
+
+        if self.is_linear_reg:
+            return self.model.predict(X_test)
 
         if hasattr(self.model, "predict_proba"):
             return self.model.predict_proba(X_test)[:, 1]
