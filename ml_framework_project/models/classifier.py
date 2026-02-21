@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import joblib
+import os
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -258,3 +260,18 @@ class Classifier:
             return average_precision_score(y, y_probs)
         else:
             raise ValueError(f"Metric '{metric}' is not supported.")
+
+    def save(self, filepath: str):
+        if self.model is None:
+            raise Exception("Model has not been trained yet.")
+        
+        directory = os.path.dirname(filepath)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory)
+
+        if self.is_keras:
+            self.model.save(filepath)
+        else:
+            joblib.dump(self.model, filepath)
+        print(f"Model successfully saved to: {filepath}")
+

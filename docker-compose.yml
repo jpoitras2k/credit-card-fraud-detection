@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  fraud-detection-app:
+    build: .
+    container_name: credit_card_fraud_pipeline
+    # Map the output directories from the container live back to your Windows laptop
+    volumes:
+      - ./plots:/app/plots
+      - ./saved_models:/app/saved_models
+    # Extremely important for Python's input() commands to work inside Docker
+    stdin_open: true 
+    tty: true        

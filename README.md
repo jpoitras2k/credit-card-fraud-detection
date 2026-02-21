@@ -57,3 +57,12 @@ This project is built using Python 3.11+ and uses **UV** for fast dependency man
    uv run python -m ml_framework_project.main
    ```
    *Follow the on-screen terminal prompts to select which models to train!*
+
+## Running in Docker (Production)
+To ensure complete reproducibility and isolation, this project is fully Dockerized.
+1. Make sure [Docker Desktop](https://www.docker.com/) is installed and running.
+2. Build and run the interactive container:
+   ```bash
+   docker compose run fraud-detection-app
+   ```
+This will open the CLI menu directly in your terminal. Because the volumes are mapped in `docker-compose.yml`, any `.png` graphs or `.pkl`/`.keras` saved models generated inside the container will automatically appear in your local Windows folder!

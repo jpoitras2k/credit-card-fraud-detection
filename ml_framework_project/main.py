@@ -44,6 +44,9 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
     print(f"Testing data shape: {X_test.shape}")
 
     results = []
+    best_pr_auc = -1.0
+    best_model_name = ""
+    best_clf = None
 
     # Phase 4: Model Training and Evaluation (Supervised)
     if selected_models:
@@ -65,6 +68,11 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
                 results.append(
                     {"Model": model_name, "Accuracy": acc, "F1-Score": f1, "PR-AUC": pr_auc}
                 )
+
+                if pr_auc > best_pr_auc:
+                    best_pr_auc = pr_auc
+                    best_model_name = model_name
+                    best_clf = clf
             except Exception as e:
                 print(f"Failed to train {model_name}: {e}")
 
@@ -87,6 +95,15 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
     if not results_df.empty:
         print("\\n--- Final Model Comparison ---")
         print(results_df.to_string(index=False))
+
+        # Save Best Model Logic
+        if best_clf:
+            print(f"\\n--- Exporting Best Model ---")
+            extension = ".keras" if best_clf.is_keras else ".pkl"
+            safe_name = best_model_name.replace(" ", "_").lower()
+            filepath = os.path.join("saved_models", f"best_model_{safe_name}{extension}")
+            print(f"Highest PR-AUC achieved: {best_pr_auc:.4f} ({best_model_name})")
+            best_clf.save(filepath)
 
         # Do not plot if only 1 model was evaluated
         if len(results_df) > 1:
