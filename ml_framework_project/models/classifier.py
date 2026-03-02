@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Union
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -120,8 +121,8 @@ class Classifier:
 
     def fit(
         self,
-        X_train: pd.DataFrame or np.ndarray,
-        y_train: pd.Series or np.ndarray,
+        X_train: Union[pd.DataFrame, np.ndarray],
+        y_train: Union[pd.Series, np.ndarray],
         model_name: str = "Logistic Regression",
         perform_tuning: bool = False,
     ):
@@ -201,7 +202,7 @@ class Classifier:
 
         print(f"Model '{model_name}' trained successfully.")
 
-    def predict(self, X_test: pd.DataFrame or np.ndarray) -> np.ndarray:
+    def predict(self, X_test: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         if self.model is None:
             raise Exception("Model has not been trained yet. Please call fit() first.")
 
@@ -216,7 +217,7 @@ class Classifier:
 
         return self.model.predict(X_test)
 
-    def predict_proba(self, X_test: pd.DataFrame or np.ndarray) -> np.ndarray:
+    def predict_proba(self, X_test: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         if self.model is None:
             raise Exception("Model has not been trained yet.")
 
@@ -235,8 +236,8 @@ class Classifier:
 
     def score(
         self,
-        X: pd.DataFrame or np.ndarray,
-        y: pd.Series or np.ndarray,
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.Series, np.ndarray],
         metric: str = "f1",
     ) -> float:
         if self.model is None:

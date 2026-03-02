@@ -2,7 +2,7 @@
 
 This repository contains an end-to-end Machine Learning Framework designed to detect fraudulent credit card transactions. 
 
-It was specifically built to fulfill the **RoboGarden / UpWork Machine Learning Bootcamp** requirements through a structured 6-phase approach ranging from Exploratory Data Analysis (EDA) to Deep Learning evaluation.
+It was specifically built to fulfill the Credit Card Fraud Detection requirements through a structured 6-phase approach ranging from Exploratory Data Analysis (EDA) to Deep Learning evaluation.
 
 ## Problem Description
 Credit card fraud detection is a critical classification problem. The challenge is the extreme class imbalance: out of hundreds of thousands of transactions, only a tiny fraction are fraudulent.
@@ -18,7 +18,7 @@ Credit card fraud detection is a critical classification problem. The challenge 
 - **Machine Learning (Scikit-Learn):** Linear & Logistic Regression, K-Nearest Neighbors, Decision Trees, Random Forest, K-Means Clustering.
 - **Deep Learning (Keras/TensorFlow):** Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN).
 
-## Bootcamp Implementation Phases
+## Implementation Phases
 
 ### Phase 1: Data Analysis and Preparation
 - Conducted Exploratory Data Analysis (`exploration.ipynb`) to visualize the heavy class imbalance, transaction distributions, and correlation matrix.
@@ -34,8 +34,11 @@ Credit card fraud detection is a critical classification problem. The challenge 
 - Due to the nature of the dataset, evaluation aggressively prioritized **Precision-Recall AUC (PR-AUC)** and **F1-Scores** over standard accuracy.
 - Generated an automated Seaborn Bar Chart plotting the comparative performance metrics across all models upon pipeline completion.
 
-### Phase 6: Interactive UX
-- Wrapped the execution pipeline in an interactive Command Line Interface (CLI) menu, allowing users to select subsets of models (e.g., exclusively Deep Learning or exclusively Classical models) to save training time during review.
+### Phase 6: Interactive Web Dashboard (Streamlit)
+- Instead of just a static Jupyter Notebook, the entire pipeline is exposed via an **interactive web application** built with Streamlit (`app.py`).
+- **Data Overview:** Live exploratory data analysis.
+- **Model Training Workbench:** Trigger complete model retraining pipelines directly from the browser.
+- **AI Threat Detection:** An Inference Simulator that loads serialized models to predict fraud probabilities on randomized data streams in real-time.
 
 ## Setup Instructions
 
@@ -52,17 +55,22 @@ This project is built using Python 3.11+ and uses **UV** for fast dependency man
    uv sync
    ```
 
-3. **Run the Interactive Application:**
+3. **Run the Interactive Web Application:**
+   ```bash
+   uv run streamlit run app.py
+   ```
+   *This will launch the comprehensive web dashboard in your default browser.*
+
+4. **(Optional) Run the CLI Training Pipeline:**
    ```bash
    uv run python -m ml_framework_project.main
    ```
-   *Follow the on-screen terminal prompts to select which models to train!*
 
 ## Running in Docker (Production)
-To ensure complete reproducibility and isolation, this project is fully Dockerized.
+To ensure complete reproducibility and isolation, this project is containerized.
 1. Make sure [Docker Desktop](https://www.docker.com/) is installed and running.
-2. Build and run the interactive container:
+2. Build and run the pipeline:
    ```bash
    docker compose run fraud-detection-app
    ```
-This will open the CLI menu directly in your terminal. Because the volumes are mapped in `docker-compose.yml`, any `.png` graphs or `.pkl`/`.keras` saved models generated inside the container will automatically appear in your local Windows folder!
+This will open the CLI pipeline directly in your terminal, and any generated `.png` graphs or `.pkl`/`.keras` saved models will automatically sync back to your local Windows machine via volume mapping!

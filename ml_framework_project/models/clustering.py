@@ -1,7 +1,10 @@
+import os
 import numpy as np
 import pandas as pd
+from typing import Union
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift
 from sklearn.metrics import (
     silhouette_score,
@@ -31,14 +34,14 @@ class Clustering:
         self.model_name = None
 
     def fit(
-        self, X_train: pd.DataFrame or np.ndarray, model_name: str = "k-Means", **kwargs
+        self, X_train: Union[pd.DataFrame, np.ndarray], model_name: str = "k-Means", **kwargs
     ):
         """
         Trains the specified clustering model on the provided training data.
 
         Parameters:
         -----------
-        X_train : pd.DataFrame or np.ndarray
+        X_train : Union[pd.DataFrame, np.ndarray]
             The feature matrix for training.
         model_name : str, default='k-Means'
             The name of the algorithm to use. Options include:
@@ -71,14 +74,14 @@ class Clustering:
         self.model.fit(X_train)
         print(f"Model '{self.model_name}' trained successfully.")
 
-    def predict(self, X_test: pd.DataFrame or np.ndarray) -> np.ndarray:
+    def predict(self, X_test: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
         Predicts cluster labels for the testing set.
         Note: Some models like Agglomerative Hierarchal Clustering do not support
         predicting on new data after training.
 
         Parameters:
-        X_test (pd.DataFrame or np.ndarray): Testing features.
+        X_test (Union[pd.DataFrame, np.ndarray]): Testing features.
 
         Returns:
         np.ndarray: Predicted cluster labels.
@@ -98,7 +101,7 @@ class Clustering:
 
     def score(
         self,
-        X: pd.DataFrame or np.ndarray,
+        X: Union[pd.DataFrame, np.ndarray],
         labels: np.ndarray = None,
         metric: str = "silhouette",
     ) -> float:
@@ -106,7 +109,7 @@ class Clustering:
         Evaluates the clustering performance using the specified metric.
 
         Parameters:
-        X (pd.DataFrame or np.ndarray): Features.
+        X (Union[pd.DataFrame, np.ndarray]): Features.
         labels (np.ndarray, optional): Cluster labels. If None, the labels from the trained model are used.
         metric (str): Metric to calculate. Options: 'silhouette', 'calinski_harabasz', 'davies_bouldin'.
 
@@ -146,7 +149,7 @@ class Clustering:
 
     def plot_results(
         self,
-        X: pd.DataFrame or np.ndarray,
+        X: Union[pd.DataFrame, np.ndarray],
         labels: np.ndarray,
         model_name: str = "Clustering Model",
     ):
@@ -154,39 +157,46 @@ class Clustering:
         Plots the clustering results using PCA to reduce dimensions to 2D for visualization.
 
         Parameters:
-        X (pd.DataFrame or np.ndarray): Features.
+        X (Union[pd.DataFrame, np.ndarray]): Features.
         labels (np.ndarray): Cluster labels.
         model_name (str): Name of the model for the plot title.
         """
-        import os
-        from sklearn.decomposition import PCA
-
         print("Reducing dimensions to 2D using PCA for visualization...")
         # Reduce dimensions to 2D for visualization
         pca = PCA(n_components=2)
         X_pca = pca.fit_transform(X)
 
         plt.figure(figsize=(10, 6))
+        
+        # Convert numeric labels to readable strings for the legend
+        str_labels = [f"Identified Cluster {str(l)}" for l in labels]
+        
         # Handle cases where labels are continuous vs categorical gracefully
         sns.scatterplot(
             x=X_pca[:, 0],
             y=X_pca[:, 1],
-            hue=labels,
+            hue=str_labels,
             palette="viridis",
             legend="full",
             alpha=0.6,
         )
 
-        plt.xlabel("PCA Component 1")
-        plt.ylabel("PCA Component 2")
-        plt.title(f"Clustering Results (PCA 2D Projection) - {model_name}")
+        plt.xlabel("PCA Component 1 (Primary Variance)")
+        plt.ylabel("PCA Component 2 (Secondary Variance)")
+        plt.title(f"Unsupervised Anomaly Detection (PCA 2D Projection) - {model_name}")
+        plt.legend(title="Algorithm Groups", bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.grid(True)
+        plt.tight_layout()
 
         # Save plot
-        if not os.path.exists("plots"):
-            os.makedirs("plots")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        project_dir = os.path.dirname(base_dir) # to get back to ml_framework_project
+        project_root = os.path.dirname(project_dir)
+        plots_dir = os.path.join(project_root, "plots")
+        if not os.path.exists(plots_dir):
+            os.makedirs(plots_dir)
 
-        plot_path = f'plots/{model_name.replace(" ", "_")}_clustering_results.png'
+        plot_path = os.path.join(plots_dir, f'{model_name.replace(" ", "_")}_clustering_results.png')
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
 

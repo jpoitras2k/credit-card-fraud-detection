@@ -1,12 +1,6 @@
-"""
-Main execution script for the Credit Card Fraud Detection project.
-Curriculum Alignment: RoboGarden Bootcamp
 
-Phase 4 & 5 execution: trains and evaluates classical and deep learning models,
-then creates a comparative visualization of their performance.
+## Main execution script for the Credit Card Fraud Detection project.
 
-Phase 6: Interactive UX - Command line interface to let the user select models.
-"""
 
 import pandas as pd
 import numpy as np
@@ -73,6 +67,15 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
                     best_pr_auc = pr_auc
                     best_model_name = model_name
                     best_clf = clf
+                
+                # Export all models during the run
+                extension = ".keras" if clf.is_keras else ".pkl"
+                safe_name = model_name.replace(" ", "_").lower()
+                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                saved_models_dir = os.path.join(project_root, "saved_models")
+                if not os.path.exists(saved_models_dir):
+                    os.makedirs(saved_models_dir)
+                clf.save(os.path.join(saved_models_dir, f"model_{safe_name}{extension}"))
             except Exception as e:
                 print(f"Failed to train {model_name}: {e}")
 
@@ -86,6 +89,9 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
             clu.fit(X_sample, model_name="k-Means", n_clusters=2)
             score = clu.score(X_sample, metric="silhouette")
             print(f"K-Means Silhouette Score on sample: {score:.4f}")
+            
+            # Generate and save the visualization
+            clu.plot_results(X_sample, clu.model.labels_, model_name="k-Means")
         except Exception as e:
             print(f"Failed to train K-Means: {e}")
 
@@ -96,14 +102,10 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
         print("\\n--- Final Model Comparison ---")
         print(results_df.to_string(index=False))
 
-        # Save Best Model Logic
+        # Summarize Best Model
         if best_clf:
-            print(f"\\n--- Exporting Best Model ---")
-            extension = ".keras" if best_clf.is_keras else ".pkl"
-            safe_name = best_model_name.replace(" ", "_").lower()
-            filepath = os.path.join("saved_models", f"best_model_{safe_name}{extension}")
+            print(f"\\n--- Best Model Details ---")
             print(f"Highest PR-AUC achieved: {best_pr_auc:.4f} ({best_model_name})")
-            best_clf.save(filepath)
 
         # Do not plot if only 1 model was evaluated
         if len(results_df) > 1:
@@ -121,12 +123,15 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
             plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
             plt.tight_layout()
 
-            if not os.path.exists("plots"):
-                os.makedirs("plots")
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            plots_dir = os.path.join(project_root, "plots")
+            if not os.path.exists(plots_dir):
+                os.makedirs(plots_dir)
 
-            plt.savefig("plots/model_comparison.png")
+            plot_path = os.path.join(plots_dir, "model_comparison.png")
+            plt.savefig(plot_path)
             print("\\nSaved performance plot to 'plots/model_comparison.png'")
-            plt.show()
+            plt.close()
 
 
 def main():

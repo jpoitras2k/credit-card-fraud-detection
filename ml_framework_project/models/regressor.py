@@ -1,5 +1,7 @@
+import os
 import numpy as np
 import pandas as pd
+from typing import Union
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
@@ -36,8 +38,8 @@ class Regressor:
 
     def fit(
         self,
-        X_train: pd.DataFrame or np.ndarray,
-        y_train: pd.Series or np.ndarray,
+        X_train: Union[pd.DataFrame, np.ndarray],
+        y_train: Union[pd.Series, np.ndarray],
         model_name: str = "Linear Regression",
         perform_tuning: bool = False,
     ):
@@ -46,9 +48,9 @@ class Regressor:
 
         Parameters:
         -----------
-        X_train : pd.DataFrame or np.ndarray
+        X_train : Union[pd.DataFrame, np.ndarray]
             The feature matrix for training.
-        y_train : pd.Series or np.ndarray
+        y_train : Union[pd.Series, np.ndarray]
             The target vector for training (true values).
         model_name : str, default='Linear Regression'
             The name of the algorithm to use. Options include:
@@ -131,12 +133,12 @@ class Regressor:
 
         print(f"Model '{model_name}' trained successfully.")
 
-    def predict(self, X_test: pd.DataFrame or np.ndarray) -> np.ndarray:
+    def predict(self, X_test: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
         Predicts values for the testing set.
 
         Parameters:
-        X_test (pd.DataFrame or np.ndarray): Testing features.
+        X_test (Union[pd.DataFrame, np.ndarray]): Testing features.
 
         Returns:
         np.ndarray: Predicted values.
@@ -148,16 +150,16 @@ class Regressor:
 
     def score(
         self,
-        X: pd.DataFrame or np.ndarray,
-        y: pd.Series or np.ndarray,
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.Series, np.ndarray],
         metric: str = "r2",
     ) -> float:
         """
         Evaluates the model performance using the specified metric.
 
         Parameters:
-        X (pd.DataFrame or np.ndarray): Features.
-        y (pd.Series or np.ndarray): True values.
+        X (Union[pd.DataFrame, np.ndarray]): Features.
+        y (Union[pd.Series, np.ndarray]): True values.
         metric (str): Metric to calculate. Options: 'r2', 'mean_squared_error', 'root_mean_squared_error', 'mean_absolute_error'.
 
         Returns:
@@ -181,16 +183,16 @@ class Regressor:
 
     def plot_results(
         self,
-        y_true: pd.Series or np.ndarray,
-        y_pred: pd.Series or np.ndarray,
+        y_true: Union[pd.Series, np.ndarray],
+        y_pred: Union[pd.Series, np.ndarray],
         model_name: str = "Model",
     ):
         """
         Plots the actual vs predicted values.
 
         Parameters:
-        y_true (pd.Series or np.ndarray): True values.
-        y_pred (pd.Series or np.ndarray): Predicted values.
+        y_true (Union[pd.Series, np.ndarray]): True values.
+        y_pred (Union[pd.Series, np.ndarray]): Predicted values.
         model_name (str): Name of the model.
         """
         plt.figure(figsize=(10, 6))
@@ -201,18 +203,19 @@ class Regressor:
         max_val = max(y_true.max(), y_pred.max())
         plt.plot([min_val, max_val], [min_val, max_val], "r--", lw=2)
 
-        plt.xlabel("Actual Price (USD)")
-        plt.ylabel("Predicted Price (USD)")
-        plt.title(f"Actual vs Predicted Prices - {model_name}")
+        plt.xlabel("Actual Value")
+        plt.ylabel("Predicted Value")
+        plt.title(f"Actual vs Predicted - {model_name}")
         plt.grid(True)
 
         # Save plot
-        import os
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        project_dir = os.path.dirname(base_dir) # to get back to ml_framework_project
+        plots_dir = os.path.join(project_dir, "plots")
+        if not os.path.exists(plots_dir):
+            os.makedirs(plots_dir)
 
-        if not os.path.exists("plots"):
-            os.makedirs("plots")
-
-        plot_path = f'plots/{model_name.replace(" ", "_")}_results.png'
+        plot_path = os.path.join(plots_dir, f'{model_name.replace(" ", "_")}_results.png')
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
         plt.show()
