@@ -32,10 +32,9 @@ def preprocess_creditcard_data(df: pd.DataFrame) -> pd.DataFrame:
         # Drop the original columns to only keep scaled
         df_scaled = df_scaled.drop(columns=["Time", "Amount"])
         # Rename the standardized columns back to typical names or keep them as _standardized
-        # For simplicity, we just keep the _standardized suffix from the scaler
+
     else:
         df_scaled = df_cleaned
-
     return df_scaled
 
 

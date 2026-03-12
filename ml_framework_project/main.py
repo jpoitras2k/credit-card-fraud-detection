@@ -30,6 +30,10 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
     y = df["Class"]
 
     X = X.replace([np.inf, -np.inf], np.nan).fillna(0)
+    
+    # Using stratified split to preserve the prior probabilities of the classes 
+    # in both the training and test sets! If we did a random split, we might end up with 0 fraud 
+    # cases in the test set due to the high imbalance!
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
@@ -42,7 +46,10 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
     best_model_name = ""
     best_clf = None
 
-    # Phase 4: Model Training and Evaluation (Supervised)
+    # Model Training and Evaluation (Supervised)
+    # This is our main benchmarking loop!
+    # Comparing different hypothesis classes (linear vs non-linear, parametric vs non-parametric) 
+    # to find the structural risk minimizer for our specific data distribution.
     if selected_models:
         for model_name in selected_models:
             print(f"\\n--- Evaluating {model_name} ---")
@@ -95,7 +102,7 @@ def run_project_pipeline(df: pd.DataFrame, selected_models: list, run_clustering
         except Exception as e:
             print(f"Failed to train K-Means: {e}")
 
-    # Phase 5: Final Performance Results & Plots
+    # Final Performance Results & Plots
     results_df = pd.DataFrame(results)
 
     if not results_df.empty:

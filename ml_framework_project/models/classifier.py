@@ -31,6 +31,9 @@ from tensorflow.keras import layers
 def plot_confusion_matrix(y_true, y_pred, title="Confusion Matrix"):
     """
     Plots the confusion matrix using seaborn heatmap.
+    # Visualizing true positives vs false positives is essential. 
+    # Just like Dr. Ng says, you can't just rely on accuracy for imbalanced datasets! 
+    # We must properly evaluate the F1 score and the PR curve.
     """
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(8, 6))
@@ -42,6 +45,10 @@ def plot_confusion_matrix(y_true, y_pred, title="Confusion Matrix"):
 
 
 def build_keras_ann(input_dim):
+    # Building a standard Multi-Layer Perceptron.
+    # I added dropout layers because avoiding over-parameterization is key for the bias-variance tradeoff!
+    # A single hidden layer might theoretically approximate any continuous function,
+    # but deeper architectures yield more robust abstract representations.
     model = keras.Sequential(
         [
             layers.Dense(32, activation="relu", input_shape=(input_dim,)),
@@ -73,6 +80,8 @@ def build_keras_cnn(input_dim):
         ]
     )
     model.compile(
+        # Using Adam over SGD here because adaptive learning rates help us
+        # traverse the saddle points in the non-convex loss surface much faster!
         optimizer="adam",
         loss="binary_crossentropy",
         metrics=["accuracy", keras.metrics.AUC(name="pr_auc", curve="PR")],
@@ -112,6 +121,9 @@ class Classifier:
     - Keras ANN (Artificial Neural Network)
     - Keras CNN (Convolutional Neural Network)
     - Keras RNN (Recurrent Neural Network)
+    
+    # I implemented all these models so we can have a proper benchmark. 
+    # According to No Free Lunch Theorem, there is no one universal best model. We must empirically evaluate!
     """
 
     def __init__(self):
@@ -145,6 +157,7 @@ class Classifier:
                 f"Training {model_name} for 5 epochs (Early Stopping applied internally)..."
             )
 
+            # Implementing Early Stopping to prevent overfitting.
             early_stopping = keras.callbacks.EarlyStopping(
                 monitor="val_pr_auc", mode="max", patience=3, restore_best_weights=True
             )
@@ -203,6 +216,8 @@ class Classifier:
         print(f"Model '{model_name}' trained successfully.")
 
     def predict(self, X_test: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+        # Performing inference. Remember to ensure X_test has the same feature mapping 
+        # as the training set, otherwise we'll have input space covariate shift!
         if self.model is None:
             raise Exception("Model has not been trained yet. Please call fit() first.")
 

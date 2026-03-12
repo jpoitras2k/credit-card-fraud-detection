@@ -75,6 +75,8 @@ def load_trained_models():
     return loaded_models
 
 # --- Main App ---
+# Deploying our models using Streamlit for an interactive MLOps dashboard! 
+# This is crucial for bridging the gap between Data Scientists and business stakeholders.
 st.markdown('<p class="big-font">🛡️ Credit Fraud Detection Engine</p>', unsafe_allow_html=True)
 st.write("A comprehensive machine learning pipeline deployed to intercept and analyze anomalous financial transactions.")
 
@@ -111,6 +113,9 @@ if app_mode == "Data Overview & EDA":
     st.subheader("Data Preview")
     st.dataframe(df.head(10), use_container_width=True)
 
+    # Dealing with extreme class imbalance here. 
+    # If we trained a naive classifier, it would just predict everything as majority class 
+    # and achieve 99.8% accuracy but 0.0% recall! We have to use proper metrics like PR-AUC!
     st.subheader("Class Distribution (Highly Imbalanced)")
     fig = px.pie(
         names=["Legitimate", "Fraud"],
@@ -228,6 +233,8 @@ elif app_mode == "Model Evaluation & Inference":
                          
                     # To prevent 100% accuracy due to data leakage, we must simulate testing on *unseen* data
                     # We mimic the 80/20 train/test split from the main pipeline and only sample from the test set
+                    # Preventing Data Leakage is ML 101! 
+                    # If we perform inference on data we trained on, we're just testing memorization, not generalization capacity!
                     from sklearn.model_selection import train_test_split
                     df_shuffled = df.sample(frac=1, random_state=42).reset_index(drop=True)
                     _, unseen_df = train_test_split(df_shuffled, test_size=0.2, random_state=42, stratify=df_shuffled['Class'])
