@@ -12,7 +12,7 @@ Credit card fraud detection is a critical classification problem. The challenge 
 - **Features:** `Time` (seconds since first transaction), `V1-V28` (PCA transformed features due to confidentiality), and `Amount` (transaction amount).
 - **Target:** `Class` (1 for Fraud, 0 for Genuine).
 
-## Technologies Mastered
+## Technologies Used
 - **Languages:** Python (Object-Oriented Programming)
 - **Data Science:** Numpy, Pandas, Matplotlib, Seaborn
 - **Machine Learning (Scikit-Learn):** Linear & Logistic Regression, K-Nearest Neighbors, Decision Trees, Random Forest, K-Means Clustering.
